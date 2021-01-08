@@ -8,3 +8,5 @@ registartion = InlineKeyboardButton("Регистрация", callback_data='reg
 info = InlineKeyboardButton("Подробнее", callback_data='info')
 reg_btns = InlineKeyboardMarkup().row(registartion, info)
 
+read_db = InlineKeyboardButton("База данных", callback_data='read_db')
+admin_btns = InlineKeyboardMarkup().add(read_db)

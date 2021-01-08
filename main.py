@@ -13,6 +13,7 @@ from classes import User, Form
 from database import Data
 from config import *
 
+
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=TOKEN)
 storage = MemoryStorage()
@@ -24,8 +25,9 @@ Data.create_db(database)
 
 @dp.message_handler(commands=['start'])
 async def hello(msg: types.Message):
-    if msg.from_user == admin:
-        await bot.send_message(msg.from_user.id, 'Hello creator')
+    if msg.from_user.id == admin:
+        await bot.send_message(msg.from_user.id, 'Здравствуй создатель!', reply_markup=admin_btns)
+        await Form.admin_step.set()
     else:
         await bot.send_message(msg.from_user.id, f"Hello {msg.from_user.first_name}!", reply_markup=start_btn)
         await Form.starting.set()
@@ -65,14 +67,20 @@ async def second_step_func(msg: types.Message, state: FSMContext):
     async with state.proxy() as data:
         id_ = new_user[msg.from_user.id]
         id_.phone = msg.text
-    await bot.send_message(msg.from_user.id, f"Очень приятно {id_.phone}!")
+    await bot.send_message(msg.from_user.id, f"Ваш номер {id_.phone} записан! Спасибо.")
     database.add_user(msg.from_user.id, id_.first_name, id_.phone)
     await bot.send_message(msg.from_user.id, "Регистрация прошла успешно. Можете пользоваться ботом")
     await Form.starting.set()
 
+@dp.callback_query_handler(text="read_db", state=Form.admin_step)
+async def admin_func(query: types.CallbackQuery, state: FSMContext):
+    if query.data == 'read_db':
+        for i in range(len(database.get_users())):
+            msg = f"id = {database.get_users()[i][0]}\n" \
+                  f"name = {database.get_users()[i][1]}\n" \
+                  f"phone = {database.get_users()[i][2]}"
+            await bot.send_message(admin, msg)
+            time.sleep(1)
 
-# db = Data('db.db')
-# print(db.get_users())
 
-
-executor.start_polling(dp)
+executor.start_polling(dp, skip_updates=True)
